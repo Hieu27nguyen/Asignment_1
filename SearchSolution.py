@@ -1,183 +1,146 @@
-import heapq
-from collections import deque
+from collections import deque  # Import deque for BFS
+import heapq  # Import heapq for priority queue operations in Greedy and A* search
 
 class SearchSolution:
-    def __init__(self, maze, start, goal):
-        """
-        Initializes the search solution with the given maze, start position, and goal position.
-        """
+    def __init__(self, maze):
+        # Initialize the search solution with the maze and initial values for metrics
         self.maze = maze
-        self.start = start
-        self.goal = goal
-        self.maze_map = maze.maze_map  # Access the maze structure
+        self.rows = maze.rows
+        self.cols = maze.cols
+        self.depth = -1
+        self.numCreated = 0
+        self.numExpanded = 0
+        self.maxFringe = 0
 
-    def bfs(self):
-        """
-        Breadth-First Search (BFS) algorithm to find the shortest path from start to goal.
-        Returns the path, depth, number of nodes created, number of nodes expanded, and max fringe size.
-        """
-        queue = deque([(self.start, [])])
+    def reset_metrics(self):
+        # Reset all metrics to their initial values before running a search algorithm
+        self.depth = -1
+        self.numCreated = 0
+        self.numExpanded = 0
+        self.maxFringe = 0
+
+    def bfs(self, start, goal):
+        # Breadth-First Search (BFS) algorithm implementation
+        self.reset_metrics()
+        queue = deque([(start, [])])  # Queue for BFS
         visited = set()
-        numCreated = 1
-        numExpanded = 0
-        maxFringe = 1
+        self.numCreated += 1
 
         while queue:
+            self.maxFringe = max(self.maxFringe, len(queue))
             current, path = queue.popleft()
             if current in visited:
                 continue
             visited.add(current)
+            self.numExpanded += 1
             path = path + [current]
-            numExpanded += 1
+            if current == goal:
+                self.depth = len(path) - 1
+                return path
+            for neighbor in self.get_neighbors(current):
+                if neighbor not in visited:
+                    queue.append((neighbor, path))
+                    self.numCreated += 1
+        return None
 
-            if current == self.goal:
-                depth = len(path) - 1
-                return path, depth, numCreated, numExpanded, maxFringe
-
-            for direction in 'NEWS':
-                row, col = current
-                if direction == 'N':
-                    row -= 1
-                elif direction == 'E':
-                    col += 1
-                elif direction == 'W':
-                    col -= 1
-                elif direction == 'S':
-                    row += 1
-                
-                if (row, col) in self.maze_map and self.maze_map[(row, col)] == 1:
-                    queue.append(((row, col), path))
-                    numCreated += 1
-                    maxFringe = max(maxFringe, len(queue))
-        
-        return None, -1, 0, 0, 0
-
-    def dfs(self):
-        """
-        Depth-First Search (DFS) algorithm to find a path from start to goal.
-        Returns the path, depth, number of nodes created, number of nodes expanded, and max fringe size.
-        """
-        stack = [(self.start, [])]
+    def dfs(self, start, goal):
+        # Depth-First Search (DFS) algorithm implementation
+        self.reset_metrics()
+        stack = [(start, [])]  # Stack for DFS
         visited = set()
-        numCreated = 1
-        numExpanded = 0
-        maxFringe = 1
+        self.numCreated += 1
 
         while stack:
+            self.maxFringe = max(self.maxFringe, len(stack))
             current, path = stack.pop()
             if current in visited:
                 continue
             visited.add(current)
+            self.numExpanded += 1
             path = path + [current]
-            numExpanded += 1
+            if current == goal:
+                self.depth = len(path) - 1
+                return path
+            for neighbor in self.get_neighbors(current):
+                if neighbor not in visited:
+                    stack.append((neighbor, path))
+                    self.numCreated += 1
+        return None
 
-            if current == self.goal:
-                depth = len(path) - 1
-                return path, depth, numCreated, numExpanded, maxFringe
-
-            for direction in 'NEWS':
-                row, col = current
-                if direction == 'N':
-                    row -= 1
-                elif direction == 'E':
-                    col += 1
-                elif direction == 'W':
-                    col -= 1
-                elif direction == 'S':
-                    row += 1
-                
-                if (row, col) in self.maze_map and self.maze_map[(row, col)] == 1:
-                    stack.append(((row, col), path))
-                    numCreated += 1
-                    maxFringe = max(maxFringe, len(stack))
+    def greedy(self, start, goal):
+        # Greedy Best-First Search algorithm implementation
+        self.reset_metrics()
         
-        return None, -1, 0, 0, 0
+        # Define a heuristic function (Manhattan distance)
+        def heuristic(a, b):
+            return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-    def manhattan_distance(self, point1, point2):
-        """
-        Calculates the Manhattan Distance between two points.
-        This is used as a heuristic for the search algorithms.
-        """
-        return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
-
-    def greedy_search(self):
-        """
-        Greedy Search algorithm using Manhattan Distance as the heuristic to find a path from start to goal.
-        Returns the path, depth, number of nodes created, number of nodes expanded, and max fringe size.
-        """
-        queue = [(self.manhattan_distance(self.start, self.goal), self.start, [])]
+        queue = []
+        heapq.heappush(queue, (0, start, []))  # Priority queue for Greedy search
         visited = set()
-        numCreated = 1
-        numExpanded = 0
-        maxFringe = 1
+        self.numCreated += 1
 
         while queue:
-            _, current, path = heapq.heappop(queue)
+            self.maxFringe = max(self.maxFringe, len(queue))
+            cost, current, path = heapq.heappop(queue)
             if current in visited:
                 continue
             visited.add(current)
+            self.numExpanded += 1
             path = path + [current]
-            numExpanded += 1
+            if current == goal:
+                self.depth = len(path) - 1
+                return path
+            for neighbor in self.get_neighbors(current):
+                if neighbor not in visited:
+                    heapq.heappush(queue, (heuristic(neighbor, goal), neighbor, path))
+                    self.numCreated += 1
+        return None
 
-            if current == self.goal:
-                depth = len(path) - 1
-                return path, depth, numCreated, numExpanded, maxFringe
-
-            for direction in 'NEWS':
-                row, col = current
-                if direction == 'N':
-                    row -= 1
-                elif direction == 'E':
-                    col += 1
-                elif direction == 'W':
-                    col -= 1
-                elif direction == 'S':
-                    row += 1
-                
-                if (row, col) in self.maze_map and self.maze_map[(row, col)] == 1:
-                    heapq.heappush(queue, (self.manhattan_distance((row, col), self.goal), (row, col), path))
-                    numCreated += 1
-                    maxFringe = max(maxFringe, len(queue))
+    def astar(self, start, goal):
+        # A* Search algorithm implementation
+        self.reset_metrics()
         
-        return None, -1, 0, 0, 0
+        # Define a heuristic function (Manhattan distance)
+        def heuristic(a, b):
+            return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-    def a_star(self):
-        """
-        A* Search algorithm using Manhattan Distance as the heuristic to find the shortest path from start to goal.
-        Returns the path, depth, number of nodes created, number of nodes expanded, and max fringe size.
-        """
-        queue = [(self.manhattan_distance(self.start, self.goal), 0, self.start, [])]
+        queue = []
+        heapq.heappush(queue, (0, start, []))  # Priority queue for A* search
         visited = set()
-        numCreated = 1
-        numExpanded = 0
-        maxFringe = 1
+        g_costs = {start: 0}  # Cost from start to current node
+        self.numCreated += 1
 
         while queue:
-            _, cost, current, path = heapq.heappop(queue)
+            self.maxFringe = max(self.maxFringe, len(queue))
+            f_cost, current, path = heapq.heappop(queue)
             if current in visited:
                 continue
             visited.add(current)
+            self.numExpanded += 1
             path = path + [current]
-            numExpanded += 1
+            if current == goal:
+                self.depth = len(path) - 1
+                return path
+            for neighbor in self.get_neighbors(current):
+                tentative_g_cost = g_costs[current] + 1
+                if neighbor not in g_costs or tentative_g_cost < g_costs[neighbor]:
+                    g_costs[neighbor] = tentative_g_cost
+                    f_cost = tentative_g_cost + heuristic(neighbor, goal)
+                    heapq.heappush(queue, (f_cost, neighbor, path))
+                    self.numCreated += 1
+        return None
 
-            if current == self.goal:
-                depth = len(path) - 1
-                return path, depth, numCreated, numExpanded, maxFringe
-
-            for direction in 'NEWS':
-                row, col = current
-                if direction == 'N':
-                    row -= 1
-                elif direction == 'E':
-                    col += 1
-                elif direction == 'W':
-                    col -= 1
-                elif direction == 'S':
-                    row += 1
-                
-                if (row, col) in self.maze_map and self.maze_map[(row, col)] == 1:
-                    heapq.heappush(queue, (self.manhattan_distance((row, col), self.goal) + cost + 1, cost + 1, (row, col), path))
-                    numCreated += 1
-                    maxFringe = max(maxFringe, len(queue))
-        
-        return None, -1, 0, 0, 0
+    def get_neighbors(self, position):
+        # Get valid neighbors of a position considering the maze's walls
+        row, col = position
+        neighbors = []
+        if row > 1 and self.maze.maze_map[row, col]['N']:
+            neighbors.append((row - 1, col))
+        if row < self.rows and self.maze.maze_map[row, col]['S']:
+            neighbors.append((row + 1, col))
+        if col > 1 and self.maze.maze_map[row, col]['W']:
+            neighbors.append((row, col - 1))
+        if col < self.cols and self.maze.maze_map[row, col]['E']:
+            neighbors.append((row, col + 1))
+        return neighbors
