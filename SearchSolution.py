@@ -22,22 +22,22 @@ class SearchSolution:
     def bfs(self, start, goal):
         # Breadth-First Search (BFS) algorithm implementation
         self.reset_metrics()
-        queue = deque([(start, [])])  # Queue for BFS
-        visited = set()
+        queue = deque([(start, [])])  # Queue for BFS, storing (current position, path)
+        visited = set()  # Set to keep track of visited nodes
         self.numCreated += 1
 
         while queue:
-            self.maxFringe = max(self.maxFringe, len(queue))
-            current, path = queue.popleft()
+            self.maxFringe = max(self.maxFringe, len(queue))  # Update max fringe size
+            current, path = queue.popleft()  # Dequeue the front element
             if current in visited:
                 continue
-            visited.add(current)
+            visited.add(current)  # Mark the current node as visited
             self.numExpanded += 1
-            path = path + [current]
-            if current == goal:
+            path = path + [current]  # Append current position to the path
+            if current == goal:  # Goal check
                 self.depth = len(path) - 1
                 return path
-            for neighbor in self.get_neighbors(current):
+            for neighbor in self.get_neighbors(current):  # Explore neighbors
                 if neighbor not in visited:
                     queue.append((neighbor, path))
                     self.numCreated += 1
@@ -46,22 +46,22 @@ class SearchSolution:
     def dfs(self, start, goal):
         # Depth-First Search (DFS) algorithm implementation
         self.reset_metrics()
-        stack = [(start, [])]  # Stack for DFS
-        visited = set()
+        stack = [(start, [])]  # Stack for DFS, storing (current position, path)
+        visited = set()  # Set to keep track of visited nodes
         self.numCreated += 1
 
         while stack:
-            self.maxFringe = max(self.maxFringe, len(stack))
-            current, path = stack.pop()
+            self.maxFringe = max(self.maxFringe, len(stack))  # Update max fringe size
+            current, path = stack.pop()  # Pop the top element
             if current in visited:
                 continue
-            visited.add(current)
+            visited.add(current)  # Mark the current node as visited
             self.numExpanded += 1
-            path = path + [current]
-            if current == goal:
+            path = path + [current]  # Append current position to the path
+            if current == goal:  # Goal check
                 self.depth = len(path) - 1
                 return path
-            for neighbor in self.get_neighbors(current):
+            for neighbor in self.get_neighbors(current):  # Explore neighbors
                 if neighbor not in visited:
                     stack.append((neighbor, path))
                     self.numCreated += 1
